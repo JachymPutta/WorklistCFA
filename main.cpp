@@ -1,5 +1,6 @@
 #include <bits/types/FILE.h>
 #include <cstdlib>
+#include <endian.h>
 #include <iostream>
 #include <algorithm>
 #include <math.h>
@@ -8,6 +9,7 @@
 #include <string.h>
 #include <queue>
 #include <set>
+#include <vector>
 
 #include "const.h"
 #include "util.h"
@@ -26,21 +28,14 @@ void populateMatrix (int* matrix, int rows, int cols, const char* path)
     fclose(fp);
 }
 
-void populateStore (std::set<int> store[], int lams)
-{
-  for(int i = 0; i < lams; i++){
-    store[i].insert(i);
-  }
-}
+void makeDepGraph(std::vector<std::vector<bool>> deps, int* arg1, int* arg2, int* callfun, int calls){
 
-void makeDepGraph(int* deps, int* arg1, int* arg2, int* callfun, int calls){
-
-  memset(deps, 0, calls * sizeof(int));
 
   for (int i = 0; i < calls; i++){
-    deps[arg1[i]] |= 1UL << i;
-    deps[arg2[i]] |= 1UL << i;
-    deps[callfun[i]] |= 1UL << i;
+    // fprintf(stderr, "Handling index %i: \n arg1[i] = %i,  arg2[i] = %i, callfun[i] = %i\n", i , arg1[i], arg2[i], callfun[i]);
+    deps[arg1[i]][i] = 1;
+    deps[arg2[i]][i] = 1;
+    deps[callfun[i]][i] = 1;
   }
 }
 
@@ -78,7 +73,7 @@ bool update(std::set<int> store[], int arg, int var) {
     return true;
   }
 }
-void runAnalysis(std::set<int> store[], int *arg1Vec, int *arg2Vec, int *callFun, int *deps, int calls, int lams) {
+void runAnalysis(std::set<int> store[], int *arg1Vec, int *arg2Vec, int *callFun, std::vector<std::vector<bool>> deps, int calls, int lams) {
   //Create worklist and enqueue all callsites.
   std::queue<int> workList;
   for (int i = 0; i < calls; i++){
@@ -115,14 +110,10 @@ void runAnalysis(std::set<int> store[], int *arg1Vec, int *arg2Vec, int *callFun
 
     // Push successors into the worklist
     if(ch1 || ch2){
-      unsigned int succs = deps[callSite];
-      int i = 0;
-      while(succs){
-        if (succs & 1) {
+      for (int i = 0; i < calls; i++){
+        if(deps[callSite][i]){
           workList.push(i);
         }
-        succs = succs >> 1;
-        i++;
       }
     }
     iter++;
@@ -151,7 +142,6 @@ int main(int argc, char** argv)
   std::string arg2Path = testDir + ARG2_PATH;
   std::string funPath = testDir + FUN_PATH;
 
-  // FILE *fp =fopen((testDir + PARAMS_PATH).c_str(), "r");
   FILE *fp = fopen(paramsPath.c_str(), "r");
   fscanf(fp, "%d %d %d\n", &lams, &vars, &calls);
   fclose(fp);
@@ -166,10 +156,11 @@ int main(int argc, char** argv)
 
 
   std::set<int> store[vals];
+  std::vector<std::vector<bool>> deps(vals, std::vector<bool>(vals));
   int *callFun = (int*)malloc(calls * sizeof(int));
   int *callArg1 = (int*)malloc(calls * sizeof(int));
   int *callArg2 = (int*)malloc(calls * sizeof(int));
-  int *deps = (int *)malloc(calls * sizeof(int));
+  // int *deps = (int *)malloc(calls * sizeof(int));
 
   //Populate store
   std::cout << "\n";
@@ -182,14 +173,12 @@ int main(int argc, char** argv)
 
   // Read in the FUN matrix
   // fprintf(stderr, "Reading CALLFUN (%d x %d) ... ", calls, 1);
-  // populateMatrix(callFun, calls, 2, (testDir + funPath).c_str());
   populateMatrix(callFun, calls, 2, funPath.c_str());
   // fprintf(stderr, "Populated FUN\n");
   // displayMatrix(callFun, 1, calls);
 
   // Read in the ARG1 matrix
   // fprintf(stderr, "Reading ARG1 (%d x %d) ... ", calls, 1);
-  // populateMatrix(callArg1, calls, 2, (testDir + arg1Path).c_str());
   populateMatrix(callArg1, calls, 2, arg1Path.c_str());
   // fprintf(stderr, "Populated ARG1\n");
   // displayMatrix(callArg1, 1, calls);
@@ -197,19 +186,18 @@ int main(int argc, char** argv)
 
   // Read in the ARG2 matrix
   // fprintf(stderr, "Reading ARG2 (%d x %d) ... ", calls, 1);
-  // populateMatrix(callArg2, calls, 2, (testDir + arg2Path).c_str());
   populateMatrix(callArg2, calls, 2, arg2Path.c_str());
   // fprintf(stderr, "Populated ARG2\n");
   // displayMatrix(callArg2, 1, calls);
 
 
-  //Construct the dependency graph
+  // Construct the dependency graph
   // fprintf(stderr, "Constructing dependency graph (%d x %d) ... ", calls, 1);
   makeDepGraph(deps,callArg1, callArg2, callFun, calls);
   // fprintf(stderr, "Graph constructed\n");
-  // displayMatrix(deps, 1, calls);
+  // printDeps(deps);
 
-  //Run the analysis
+  // Run the analysis
   runAnalysis(store, callArg1, callArg2, callFun, deps, calls, lams);
   // printStore(store, vals);
 
@@ -218,9 +206,10 @@ int main(int argc, char** argv)
   // free(callArg1);
   // free(callArg2);
 
-  FILE* resFp = fopen(resDir.c_str(), "w");
-  reformatStore(store, vals, resFp);
-  fclose(resFp);
+  // Write out the result
+  // FILE* resFp = fopen(resDir.c_str(), "w");
+  // reformatStore(store, vals, resFp);
+  // fclose(resFp);
 
   return (EXIT_SUCCESS);
 }

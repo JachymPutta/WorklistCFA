@@ -2,6 +2,7 @@
 #include <iostream>
 #include <queue>
 #include <set>
+#include <vector>
 
 #include "util.h"
 #include "const.h"
@@ -85,4 +86,13 @@ void printQ(std::queue<int> q) {
     q.pop();
   }
   std::cout << "\n";
+}
+
+void printDeps(std::vector<std::vector<bool>> deps) {
+  for (unsigned long i = 0; i < deps.size(); i++) {
+    for (unsigned long j = 0; j < deps[i].size(); j++) {
+      std::cout << deps[i][j] << " ";
+    }
+    std::cout << "\n";
+  }
 }
