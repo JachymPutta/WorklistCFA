@@ -33,9 +33,9 @@ void makeDepGraph(std::vector<std::vector<bool>> deps, int* arg1, int* arg2, int
 
   for (int i = 0; i < calls; i++){
     // fprintf(stderr, "Handling index %i: \n arg1[i] = %i,  arg2[i] = %i, callfun[i] = %i\n", i , arg1[i], arg2[i], callfun[i]);
-    deps[arg1[i]][i] = 1;
-    deps[arg2[i]][i] = 1;
-    deps[callfun[i]][i] = 1;
+    deps[i][arg1[i]] = 1;
+    deps[i][arg2[i]] = 1;
+    deps[i][callfun[i]] = 1;
   }
 }
 
@@ -131,6 +131,7 @@ int main(int argc, char** argv)
 
   if (argc == 2){
     testDir = argv[1];
+    resName = argv[1];
   }
 
   resName.pop_back();
@@ -156,14 +157,13 @@ int main(int argc, char** argv)
 
 
   std::set<int> store[vals];
-  std::vector<std::vector<bool>> deps(vals, std::vector<bool>(vals));
+  std::vector<std::vector<bool>> deps(calls, std::vector<bool>(vals));
   int *callFun = (int*)malloc(calls * sizeof(int));
   int *callArg1 = (int*)malloc(calls * sizeof(int));
   int *callArg2 = (int*)malloc(calls * sizeof(int));
   // int *deps = (int *)malloc(calls * sizeof(int));
 
   //Populate store
-  std::cout << "\n";
   for (int i = 0; i < lams; i++) {
     store[i].insert(i);
   }
@@ -207,9 +207,10 @@ int main(int argc, char** argv)
   // free(callArg2);
 
   // Write out the result
-  // FILE* resFp = fopen(resDir.c_str(), "w");
-  // reformatStore(store, vals, resFp);
-  // fclose(resFp);
+  fprintf(stderr, "Writing %s\n", resDir.c_str());
+  FILE* resFp = fopen(resDir.c_str(), "w");
+  reformatStore(store, vals, resFp);
+  fclose(resFp);
 
   return (EXIT_SUCCESS);
 }
