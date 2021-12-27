@@ -3,6 +3,7 @@
 #include <endian.h>
 #include <iostream>
 #include <algorithm>
+#include <map>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,15 +28,27 @@ void populateMatrix (int* matrix, int rows, int cols, const char* path)
 	}
     fclose(fp);
 }
-
-void makeDepGraph(std::vector<std::vector<bool>> deps, int* arg1, int* arg2, int* callfun, int calls){
+void addOrAppend(std::map<int, std::vector<int>> &deps, int key, int value) {
+  std::map<int, std::vector<int>>::iterator it;
+  it = deps.find(key);
+  if (it != deps.end()) {
+    it->second.push_back(value);
+  }
+  else {
+    deps[key].push_back(value);
+  }
+}
+void makeDepGraph(std::map<int, std::vector<int>> &deps, int* arg1, int* arg2, int* callfun, int calls){
 
 
   for (int i = 0; i < calls; i++){
     // fprintf(stderr, "Handling index %i: \n arg1[i] = %i,  arg2[i] = %i, callfun[i] = %i\n", i , arg1[i], arg2[i], callfun[i]);
-    deps[i][arg1[i]] = 1;
-    deps[i][arg2[i]] = 1;
-    deps[i][callfun[i]] = 1;
+    // deps[i][arg1[i]] = 1;
+    // deps[i][arg2[i]] = 1;
+    // deps[i][callfun[i]] = 1;
+    addOrAppend(deps, arg1[i], i);
+    addOrAppend(deps, arg2[i], i);
+    addOrAppend(deps, callfun[i], i);
   }
 }
 
@@ -50,19 +63,8 @@ bool update(std::set<int> store[], int arg, int var) {
   fsArg = store[arg];
   newFs = store[var];
 
-  // std::cout << "Flowset_var " << var << " before: \n";
-  // printSet(fsVar);
-  // std::cout << "\n";
-  // std::cout << "Flowset_arg " << arg << " before: \n";
-  // printSet(newFs);
-  // std::cout << "\n";
-
   //Merge sets
   newFs.insert(fsArg.begin(), fsArg.end());
-
-  // std::cout << "Flowset_var after: \n";
-  // printSet(fsVar);
-  // std::cout << "\n";
 
   if (fsVar.size() == newFs.size()){
     //No update
@@ -73,7 +75,7 @@ bool update(std::set<int> store[], int arg, int var) {
     return true;
   }
 }
-void runAnalysis(std::set<int> store[], int *arg1Vec, int *arg2Vec, int *callFun, std::vector<std::vector<bool>> deps, int calls, int lams) {
+void runAnalysis(std::set<int> store[], int *arg1Vec, int *arg2Vec, int *callFun, std::map<int, std::vector<int>> &deps, int calls, int lams) {
   //Create worklist and enqueue all callsites.
   std::queue<int> workList;
   for (int i = 0; i < calls; i++){
@@ -81,9 +83,6 @@ void runAnalysis(std::set<int> store[], int *arg1Vec, int *arg2Vec, int *callFun
   }
   int iter = 0;
  
-  // std::cout << "Starting worklist: \n";
-  // printQ(workList);
-
   while (!workList.empty()){
 
     int callSite = workList.front();
@@ -106,20 +105,29 @@ void runAnalysis(std::set<int> store[], int *arg1Vec, int *arg2Vec, int *callFun
 
       ch1 = update(store, arg1, var1);
       ch2 = update(store, arg2, var2);
-    }
 
-    // Push successors into the worklist
-    if(ch1 || ch2){
-      for (int i = 0; i < calls; i++){
-        if(deps[callSite][i]){
-          workList.push(i);
+      // Push successors into the worklist
+      if (ch1 || ch2) {
+        std::map<int, std::vector<int>>::iterator it1;
+        std::map<int, std::vector<int>>::iterator it2;
+        it1 = deps.find(arg1);
+        it2 = deps.find(arg2);
+
+        if (it1 != deps.end()) {
+          for (auto ii = it1->second.begin(); ii != it1->second.end(); ii++) {
+            workList.push(*ii);
+          }
+        }
+        if (it2 != deps.end()) {
+          for (auto ii = it2->second.begin(); ii != it2->second.end(); ii++) {
+            workList.push(*ii);
+          }
         }
       }
     }
     iter++;
     // std::cout << "Worklist after iter: " << iter << "\n";
     // printQ(workList);
-    // std::cout << "\n\n\n";
  }
 }
 
@@ -157,7 +165,8 @@ int main(int argc, char** argv)
 
 
   std::set<int> store[vals];
-  std::vector<std::vector<bool>> deps(calls, std::vector<bool>(vals));
+  // std::vector<std::vector<bool>> deps(calls, std::vector<bool>(vals));
+  std::map<int, std::vector<int>> deps;
   int *callFun = (int*)malloc(calls * sizeof(int));
   int *callArg1 = (int*)malloc(calls * sizeof(int));
   int *callArg2 = (int*)malloc(calls * sizeof(int));
@@ -167,8 +176,6 @@ int main(int argc, char** argv)
   for (int i = 0; i < lams; i++) {
     store[i].insert(i);
   }
-
-  // populateStore(store, lams);
   // printStore(store, vals);
 
   // Read in the FUN matrix
@@ -199,12 +206,12 @@ int main(int argc, char** argv)
 
   // Run the analysis
   runAnalysis(store, callArg1, callArg2, callFun, deps, calls, lams);
-  // printStore(store, vals);
+  printStore(store, vals);
 
   // Deallocate memory -- Causes error with unfinished algorithm
-  // free(callFun);
-  // free(callArg1);
-  // free(callArg2);
+  free(callFun);
+  free(callArg1);
+  free(callArg2);
 
   // Write out the result
   fprintf(stderr, "Writing %s\n", resDir.c_str());
