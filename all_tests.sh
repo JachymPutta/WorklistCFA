@@ -1,7 +1,7 @@
 #!/bin/bash
-for D in tests/*/ ; do
+for D in tests/* ; do
     echo "Executing: $D";
-    ./main "$D";
+    ./main "${D#tests/}";
     echo "$D done.";
 done
 

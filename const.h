@@ -3,13 +3,13 @@
 
 #define NUM_NOT_FOUND -42
 
-#define DIR "./tests/smallest/"
-#define RES "./res/"
+#define INPUT_DIR "./tests/"
+#define OUTPUT_DIR "./res/"
 
-#define PARAMS_PATH "program-params.lst"
-#define STORE_PATH "Store.mat"
-#define FUN_PATH "Fun.mat"
-#define ARG1_PATH "Arg1.mat"
-#define ARG2_PATH "Arg2.mat"
+#define DEFAULT_TEST "smallest"
+#define PARAMS_PATH "/program-params.lst"
+#define FUN_PATH "/Fun.mat"
+#define ARG1_PATH "/Arg1.mat"
+#define ARG2_PATH "/Arg2.mat"
 
 #endif

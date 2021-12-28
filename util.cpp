@@ -102,3 +102,40 @@ void printDeps(std::map<int, std::vector<int>> deps) {
     std::cout << std::endl;
   }
 }
+
+std::string exprId(int id, int lams) {
+  if (id < lams) {
+    return std::string("L").append(std::to_string(id));
+  } else if (id < 2 * lams) {
+    return std::string("A").append(std::to_string(id - lams));
+  } else {
+    return std::string("K").append(std::to_string(id - 2 * lams));
+  }
+}
+
+void makeGraph(std::set<int> store[], int arg1Vec[], int arg2Vec[],
+               int callFun[], std::map<int, std::vector<int>> &deps, int calls,
+               int lams, int iter, int callSite) {
+  fprintf(stdout, "\ndigraph {\n");
+  fprintf(stdout, "label = \"Iteration: %d\";\n", iter);
+  for (int i = 0; i < calls; i++) {
+    fprintf(stdout,"%s [shape=\"oval\"];\n", exprId(i, lams).c_str());
+  }
+  for(int i = 0; i < calls; i++) {
+    fprintf(stdout, "Call%d [shape = box];\n", i);
+    fprintf(stdout, "Call%d -> %s [label = F];\n", i, exprId(callFun[i], lams).c_str());
+    fprintf(stdout, "Call%d -> %s[label = A];\n", i, exprId(arg1Vec[i], lams).c_str());
+    fprintf(stdout, "Call%d -> %s[label = K];\n", i, exprId(arg2Vec[i], lams).c_str());
+  }
+  for(int i = 0; i < lams*3; i++) {
+    for(auto x : store[i]) {
+      fprintf(stdout, "%s -> %s;\n", exprId(i , lams).c_str(), exprId(x, lams).c_str());
+    }
+  }
+  fprintf(stdout, "Call%d [fillcolor = lightgray, color = red];\n", callSite);
+  for (int i = 0; i < lams; i++) {
+    fprintf(stdout, "L%d -> A%d [style = dashed];\n", i, i);
+    fprintf(stdout, "L%d -> K%d [style = dashed];\n", i, i);
+  }
+  fprintf(stdout, "}\n");
+}
