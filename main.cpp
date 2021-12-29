@@ -177,10 +177,10 @@ int main(int argc, char** argv) {
   free(callArg2);
 
   // Write out the result
-  // fprintf(stderr, "Writing %s\n", outputPath.c_str());
-  // FILE* resFp = fopen(outputPath.c_str(), "w");
-  // reformatStore(store, vals, resFp);
-  // fclose(resFp);
+  fprintf(stderr, "Writing %s\n", outputPath.c_str());
+  FILE* resFp = fopen(outputPath.c_str(), "w");
+  reformatStore(store, vals, resFp);
+  fclose(resFp);
   return EXIT_SUCCESS;
 }
 
