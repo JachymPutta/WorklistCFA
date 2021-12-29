@@ -38,7 +38,7 @@ int main(int argc, char** argv){
     return 1;
   }
 
-  bool same = true;
+  int same = 0;
   char* f1 = argv[1];
   char *f2 = argv[2];
   std::string s1;
@@ -66,15 +66,15 @@ int main(int argc, char** argv){
   fprintf(stderr, "Find differences between %s and %s:\n", f1, f2);
   for (int i = 0; i < v1.size(); i++){
     if (v1[i] != v2[i]){
-      same = false;
+      same++;
       fprintf(stderr, "Row %i not equal:\n %s: %s   %s: %s\n",
               i, f1, v1[i].c_str(), f2, v2[i].c_str());
     }
   }
-  if (same){
+  if (!same){
     fprintf(stderr, "%s %s - no differences found.\n", f1 ,f2);
   } else {
-    fprintf(stderr, "%s, %s done.\n", f1, f2); 
+    fprintf(stderr, "%s, %s - %d differences found.\n", f1, f2, same); 
   }
   return 0;
 }

@@ -90,11 +90,6 @@ void printQ(std::queue<int> q) {
 }
 
 void printDeps(std::map<int, std::vector<int>> deps) {
-  // for (unsigned long i = 0; i < deps.size(); i++) {
-  //   for (unsigned long j = 0; j < deps[i].size(); j++) {
-  //     std::cout << deps[i][j] << " ";
-  //   }
-  //   std::cout << "\n";
   for (auto const &kv :deps) {
     std::cout << kv.first << " =>";
     for (auto const &i : kv.second)
