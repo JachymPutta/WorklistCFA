@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <stdio.h>
 #include <string.h>
+#include <map>
+#include <vector>
+#include <set>
 
 #include "const.h"
 #include "util.h"
@@ -17,30 +20,6 @@ void populateMatrix(int* matrix, int rows, int cols, const char* path) {
 	  token = readToken(fp, NUM_NOT_FOUND);
 	}
   fclose(fp);
-}
-
-void reorder(int *matrix, int count) {
-  int i, j, initj;
-  int *temp = (int *)malloc(count * sizeof(int));
-  int *check = (int *)malloc(count * 3 * sizeof(int));
-
-  memset(check, 0, count * 3 * sizeof(int));
-
-  for (i = 0, initj = 0, j = 0; i < count; i++, j += 5) {
-    if (j >= count) {
-      j = ++initj;
-    }
-    temp[i] = matrix[j];
-    check[matrix[j]]++;
-  }
-  for (i = 0; i < count; i++) {
-    if (check[temp[i]] < 1) {
-      printf("Something really bad happened at %d\n", temp[i]);
-    }
-    matrix[i] = temp[i];
-  }
-  free(temp);
-  free(check);
 }
 
 void addOrAppend(std::map<int, std::vector<int>> &deps, int key, int value) {
@@ -65,16 +44,6 @@ void makeDepGraph(std::map<int, std::vector<int>> &deps, int* arg1, int* arg2, i
   }
 }
 
-template <typename Iter, typename Q>
-void push_range(Q &q, Iter begin, Iter end) {
-  for (; begin != end; ++begin) {
-    if(*begin == 13){
-      // fprintf(stdout, "Pushed here\n");
-    }
-    q.push(*begin);
-  }
-}
-
 void update(std::set<int> store[],std::queue<int> &workList, std::map<int, std::vector<int>> &deps, int arg, int var, int callsite) {
   // Get flow set from the store
   std::set<int> fsVar = store[var];
@@ -91,7 +60,7 @@ void update(std::set<int> store[],std::queue<int> &workList, std::map<int, std::
       for(int x: it->second) {
         addOrAppend(deps, var, x);
       }
-      push_range(workList, it->second.begin(), it->second.end());
+      pushRange(workList, it->second.begin(), it->second.end());
     }
   }
 }
@@ -104,7 +73,7 @@ void runAnalysis(std::set<int> store[], int arg1Vec[], int arg2Vec[], int callFu
   }
   int iter = 0;
 
-  while (!workList.empty() /* || iter < calls*3*/) {
+  while (!workList.empty()) {
     int callSite = workList.front();
     workList.pop();
 
@@ -121,7 +90,6 @@ void runAnalysis(std::set<int> store[], int arg1Vec[], int arg2Vec[], int callFu
       //         callSite, arg1, var1, arg2, var2);
       update(store, workList, deps, arg1, var1, callSite);
       update(store, workList, deps, arg2, var2, callSite);
-
     }
     iter++;
     // std::cout << "\nWorklist after iter: " << iter << "\n";
@@ -155,13 +123,12 @@ int main(int argc, char** argv) {
   }
 
   const int vals = 3 * lams;
-  
+
   // fprintf (stderr, "Program parameters\n");
   // fprintf (stderr, "------------------\n");
-  // fprintf (stderr, 
-	// 	   "lams: %d\nvars: %d\nvals: %d\ncalls: %d\nterms: %d\n", 
+  // fprintf (stderr,
+	// 	   "lams: %d\nvars: %d\nvals: %d\ncalls: %d\nterms: %d\n",
 	// 	   lams, vars, vals, calls, lams+vars+calls);
-
 
   std::map<int, std::vector<int>> deps;
   int *callFun = (int*)malloc(calls * sizeof(int));
@@ -173,47 +140,31 @@ int main(int argc, char** argv) {
   for (int i = 0; i < lams; i++) {
     store[i].insert(i);
   }
-  // printStore(store, vals);
 
   // Read in the FUN matrix
   // fprintf(stderr, "Reading CALLFUN (%d x %d) ... ", calls, 1);
   populateMatrix(callFun, calls, 2, funPath.c_str());
-  // reorder(callFun, calls);
   // fprintf(stderr, "Populated FUN\n");
-  // displayMatrix(callFun, 1, calls);
+  // printMatrix(callFun, 1, calls);
 
   // Read in the ARG1 matrix
   // fprintf(stderr, "Reading ARG1 (%d x %d) ... ", calls, 1);
   populateMatrix(callArg1, calls, 2, arg1Path.c_str());
-  // reorder(callArg1, calls);
   // fprintf(stderr, "Populated ARG1\n");
-  // displayMatrix(callArg1, 1, calls);
+  // printMatrix(callArg1, 1, calls);
 
 
   // Read in the ARG2 matrix
   // fprintf(stderr, "Reading ARG2 (%d x %d) ... ", calls, 1);
   populateMatrix(callArg2, calls, 2, arg2Path.c_str());
-  // reorder(callArg2, calls);
   // fprintf(stderr, "Populated ARG2\n");
-  // displayMatrix(callArg2, 1, calls);
-
+  // printMatrix(callArg2, 1, calls);
 
   // Construct the dependency graph
   // fprintf(stderr, "Constructing dependency graph (%d x %d) ... ", calls, 1);
   makeDepGraph(deps,callArg1, callArg2, callFun, calls);
   // fprintf(stderr, "Graph constructed\n");
   // printDeps(deps);
-  // int jj = 13;
-  // fprintf(stdout, "Callsite %d, fun = %d, arg1 = %d, arg2 = %d\n", jj, callFun[jj], callArg1[jj], callArg2[jj]);
-  // for (std::map<int,std::vector<int>>::iterator iter = deps.begin(); iter != deps.end(); ++iter) {
-  //   std::vector<int> v = iter->second;
-  //   for (auto &i : v){
-  //     if (i == 17){
-  //       fprintf(stdout, "%d - links to 17\n", iter->first);
-  //     }
-  //   }
-  // }
-  
 
   // Run the analysis
   runAnalysis(store, callArg1, callArg2, callFun, deps, calls, lams);
@@ -230,7 +181,6 @@ int main(int argc, char** argv) {
   // FILE* resFp = fopen(outputPath.c_str(), "w");
   // reformatStore(store, vals, resFp);
   // fclose(resFp);
-
   return EXIT_SUCCESS;
 }
 

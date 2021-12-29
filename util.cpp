@@ -1,4 +1,3 @@
-#include <bits/types/FILE.h>
 #include <iostream>
 #include <map>
 #include <queue>
@@ -18,7 +17,7 @@ int readToken(FILE *fp, int curr) {
   return readToken(fp, curr == NUM_NOT_FOUND ? val : curr * 10 + val);
 }
 
-void reformatStore (std::set<int> store[], int rows, FILE* handle){
+void reformatStore (std::set<int> store[], int rows, FILE* handle) {
   fprintf(handle, "#hash(");
   for (int i = 0; i < rows; i++){
     int h = 0;
@@ -37,29 +36,27 @@ void reformatStore (std::set<int> store[], int rows, FILE* handle){
   fprintf(handle, ")");
 }
 
-void displayMatrix (int* matrix, int rows, int cols)
-{
-    int i, j;
-    printf("[");
-    for (i = 0; i < rows; i++) {
-        printf("[");
-        for (j = 0; j < cols; j++) {
-          printf("%u", *(matrix + i*cols + j));
-            if (j < cols-1)
-      	      printf(" ");
-            }
-          printf ("]");
-    	if(i < rows-1)
-    	  printf("\n");
-      if ((i + 1) % (((rows > 3) ? rows : 4) / 3) == 0)
-        printf("\n");
-    }
-    printf("]\n");
+void printMatrix (int* matrix, int rows, int cols) {
+  int i, j;
+  printf("[");
+  for (i = 0; i < rows; i++) {
+      printf("[");
+      for (j = 0; j < cols; j++) {
+        printf("%u", *(matrix + i*cols + j));
+          if (j < cols-1)
+            printf(" ");
+          }
+        printf ("]");
+    if(i < rows-1)
+      printf("\n");
+    if ((i + 1) % (((rows > 3) ? rows : 4) / 3) == 0)
+      printf("\n");
+  }
+  printf("]\n");
 }
 
-void printStore (std::set<int> store[], int rows)
-{
-  for (int i = 0; i < rows; i++){
+void printStore (std::set<int> store[], int rows) {
+  for (int i = 0; i < rows; i++) {
     std::cout << "Row: " << i << " > ";
     printSet(store[i]);
     std::cout << "\n";
@@ -69,14 +66,14 @@ void printStore (std::set<int> store[], int rows)
 
 void printArray(int *array, int size) {
   std::cout << "[";
-  for (int i = 0; i < size; i++){
+  for (int i = 0; i < size; i++) {
     std::cout << array[i] << ", ";
   }
   std::cout << "]\n";
 }
 
-void printSet(std::set<int> s){
-  for (auto x : s){
+void printSet(std::set<int> s) {
+  for (auto x : s) {
     std::cout << x << " ";
   }
 }
@@ -133,4 +130,16 @@ void makeGraph(std::set<int> store[], int arg1Vec[], int arg2Vec[],
     fprintf(stdout, "L%d -> K%d [style = dashed];\n", i, i);
   }
   fprintf(stdout, "}\n");
+}
+
+// template <typename Iter, typename Q>
+// void push_range(Q &q, Iter begin, Iter end) {
+//   for (; begin != end; ++begin) {
+//     q.push(*begin);
+//   }
+// }
+void pushRange(std::queue<int> &q, std::vector<int>::iterator begin, std::vector<int>::iterator end) {
+  for (; begin != end; ++begin) {
+    q.push(*begin);
+  }
 }
