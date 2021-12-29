@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Worklist-CFA CI
 
 on:
   push:
@@ -13,11 +13,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: System setup
-      shell: bash
-      run: |
-        sudo apt install glibc
-    - name: make
+    - name: setup
+      run: g++ -O3 compare_stores.cpp -o compare_stores
+    - name: Build
       run: make
-    - name: make check
+    - name: Run tests
       run: make check
+    - name: Cleanup
+      run: |
+        make clean
+        rm -f compare-stores
